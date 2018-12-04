@@ -10,6 +10,7 @@ library("dplyr")
 neonic <- read.csv("data/vHoneyNeonic_v03.csv", header = TRUE, sep = ",")
 source('process.R')
 my_server <- function(input, output) {
+  
   ## Generate Static Dropdown Select
   states_list <- sort(unique(data.frame(lapply(neonic, as.character), stringsAsFactors=FALSE)[[9]]))
   area_selector_options <- append(list("All States"), states_list)
@@ -17,6 +18,7 @@ my_server <- function(input, output) {
     selectInput('state_xy', 'Filter By State', area_selector_options, "All States")
   })
   
+  # x dropdown
   xlist <- list('Year', 'Honey Yield', 'Amount of Neonic Pesticides')
   output$x_xy_selector <- renderUI({
     selection <- xlist
@@ -29,8 +31,8 @@ my_server <- function(input, output) {
     return(selectInput('x_xy', 'x axis', selection))
   })
   
+  # y dropdown
   ylist <- list('Honey Yield', 'Year', 'Amount of Neonic Pesticides')
-  # output$y_xy_selector <- renderUI({selectInput('y_xy', 'y axis', ylist)})
   output$y_xy_selector <- renderUI({
     selection <- ylist
     if(!is.null(input$x_xy) && !is.na(input$x_xy)) {

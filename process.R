@@ -10,6 +10,11 @@ plot_var <- function(data, x_data, y_data, title, x_label, y_label){
     labs(y=y_label, x=x_label)
 }
 
+# Get for State
+filter_by_state <- function(state, data) {
+  data[data$StateName==state,]
+}
+
 # aggregate values by year
 by_year <- function(data) {
   data$nAllNeonic[is.na(data$nAllNeonic)] <- 0
