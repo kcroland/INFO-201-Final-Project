@@ -9,7 +9,7 @@ Group members: Kyle Roland, Gavin Sreesangkom, Michelle Lee, & Phoebe Ng
 ### What's happening to honeybees?
 ![Honeybee](https://c1.staticflickr.com/1/210/519742656_0b2323bc8e_z.jpg?zz=1)
 
-While exploring final project ideas, our group came to a consensus to research the factors behind [colony collapse disorder](https://www.epa.gov/pollinator-protection/colony-collapse-disorder) (CCD). We all knew about this phenomenon of colony disappearance and its inevitable consequences, however we didn't yet know why it was happening.
+While exploring final project ideas, our group came to a consensus to research the factors behind [colony collapse disorder](https://www.epa.gov/pollinator-protection/colony-collapse-disorder) (CCD). We all knew about this phenomenon of colony disappearance and that it has inevitable consequences, however we didn't yet know why it was happening.
 
 Through research we found that there are many factors that play into the decline of honeybee populations. In our project, we chose to explore a few of these factors including pesticides, temperature, and pollution to see if we could make any inferences that would back the claims that we discovered in different studies.
 
