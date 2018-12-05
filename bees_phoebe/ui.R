@@ -33,7 +33,7 @@ shinyUI(fluidPage(
   
     # Show a plot of the generated distribution
     mainPanel(
-       plotOutput("plot")
+       plotOutput("phoebe_graph")
     )
   )
 ))

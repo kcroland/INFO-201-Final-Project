@@ -12,16 +12,15 @@ library(ggplot2)
 library(dplyr)
 
 
-data <- read.csv("vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
+data_phoebe <- read.csv("vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
 uni_names <- as.list(unique(data$StateName))
              
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  output$plot <- renderPlot({
+  output$phoebe_graph <- renderPlot({
     if (input$radio == "Region") {
-       reg_or_state <- input$radio
-       colonies_per_year <- data %>% 
+       colonies_per_year <- data_phoebe %>% 
                             group_by(year, Region) %>% 
                             summarise(col_total = sum(numcol, na.rm = TRUE)) 
        ggplot(colonies_per_year, aes(x = year, y = col_total, group = Region, color = Region)) +
@@ -33,7 +32,7 @@ shinyServer(function(input, output) {
          scale_x_continuous(breaks = seq(1991, 2017, by = 2))
     } else {
        state_name <- input$select
-       colonies_per_year <- data %>% 
+       colonies_per_year <- data_phoebe %>% 
                             filter(StateName == state_name) %>% 
                             select(numcol, year)
        ggplot(colonies_per_year, aes(x = year, y = numcol)) +
