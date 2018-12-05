@@ -11,13 +11,12 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 
-data <- read.csv("vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
-uni_names <- as.list(unique(data$StateName))
              
-
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-   
+  data <- read.csv("vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
+  uni_names <- as.list(unique(data$StateName))
+  
   output$plot <- renderPlot({
     if (input$radio == "Region") {
        reg_or_state <- input$radio
@@ -43,8 +42,6 @@ shinyServer(function(input, output) {
               y = "Number of Colonies") +
          scale_x_continuous(breaks = seq(1991, 2017, by = 2))
     }
-    
-    
   })
   
 })
