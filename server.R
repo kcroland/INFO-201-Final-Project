@@ -45,7 +45,7 @@ my_server <- function(input, output) {
   })
   
   output$plot_xy <- renderPlot({
-    data <- by_year(neonic)
+    data_mich <- by_year(neonic)
     x <- "Year"
     y <- "Honey Yield"
     if (!is.null(input$x_xy) && !is.na(input$x_xy)) {
@@ -55,7 +55,7 @@ my_server <- function(input, output) {
       y <- input$y_xy
     }
     if (!is.null(input$state_xy) && !is.na(input$state_xy) && input$state_xy != "All States") {
-      data <- filter_by_state(input$state_xy, neonic)
+      data_mich <- filter_by_state(input$state_xy, neonic)
     }
     
     if(!is.null(input$x_xy) &&
@@ -64,9 +64,9 @@ my_server <- function(input, output) {
        !is.na(input$y_xy) &&
        (input$x_xy == 'Year' || input$y_xy == 'Year')
        ) {
-      data <- by_year(data)
+      data_mich <- by_year(data_mich)
     }
-    return(plot_var(data, name_to_col(data, x), name_to_col(data, y), paste0(y, " by ", x, " for ", input$state_xy), x, y))
+    return(plot_var(data_mich, name_to_col(data_mich, x), name_to_col(data_mich, y), paste0(y, " by ", x, " for ", input$state_xy), x, y))
   })
 }
 
