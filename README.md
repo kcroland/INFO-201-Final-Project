@@ -31,4 +31,4 @@ __Format__: This project is displayed through Shiny app. Visualizations (includi
 
 __Data__: Read as .csv files then manipulated to relevant information and filtered by user selected input values.
 
-__Libraries__: To view the used libraries, please view the source code - "bees_FINAL/server.R"
+__Libraries__: To view the used libraries, please view the source code - "final_bees/server.R"
