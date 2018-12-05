@@ -1,11 +1,5 @@
-# This is the server logic of a Shiny web application. You can run the 
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
 
+## Load libraries and source scripts
 library(shiny)
 library(dplyr)
 library(ggplot2)
@@ -18,42 +12,89 @@ library(lubridate)
 library(gridExtra)
 library(stringr)
 
+source('data/process.R')
+
+
+## Load data and create reference variables
+
+# Create smaller pollution data file
+# pollution_data <- read.csv("data/pollution_us_2000_2016.csv")
+
+# pollution_data <- pollution_data %>%
+#                   select(State, Date.Local, NO2.Units, NO2.Mean,
+#                          O3.Units, O3.Mean, SO2.Units, SO2.Mean,
+#                          CO.Units, CO.Mean)
+
+# pollution_data$Date.Local <- as.Date(pollution_data$Date.Local)
+# pollution_data$Date.Local <- as.numeric(format(pollution_data$Date.Local, '%Y'))
+# 
+# pollution_means <- pollution_data %>% 
+#                   group_by(State, Date.Local) %>% 
+#                   summarise("NO2" = mean(NO2.Mean), "O3" = mean(O3.Mean), 
+#                             "SO2" = mean(SO2.Mean), "CO" = mean(CO.Mean))
+
+# colnames(pollution_means)[which(names(pollution_means) == "Date.Local")] <- "year"
+# colnames(pollution_means)[which(names(pollution_means) == "State")] <- "state"
+
+# write.csv(pollution_means, "small_pollution.csv")
+
+# Load pollution data
 pollution_means <- read.csv("data/small_pollution.csv")
 pollution_means$X <- NULL
 
-bee_data <- read.csv("data/vHoneyNeonic_v03.csv")
+# Load bee colony and pesticides data
+bee_data_all <- read.csv("data/vHoneyNeonic_v03.csv")
 
+# Load colony loss data
+df2 <- read.csv('data/Bee_Colony_Loss.csv', stringsAsFactors = FALSE)
+
+# Load temperature data
+temp <- read.csv('data/Temperature_small.csv', stringsAsFactors = FALSE)
+
+# create reference variables for bee data
+bee_data <- bee_data_all
+neonic <- bee_data_all
+data_phoebe <- bee_data_all
+df3 <- bee_data_all
+
+
+## Filter and create data frames for pollution page
+
+# Filter bee data to 2000 - 2017 to match pollution data range
 year_bee_data <- bee_data %>% 
   select(StateName, numcol, year) %>% 
   filter(year >= 2000) %>% 
   filter(year < 2017)
 colnames(year_bee_data)[which(names(year_bee_data) == "StateName")] <- "state"
 
-# combine the bee and pollution data frames to a complete data frame
+# Combine the bee and pollution data frames to a complete data frame
 complete_data <- inner_join(pollution_means, 
                             year_bee_data, by = c("year", "state"))
 
-neonic <- read.csv("data/vHoneyNeonic_v03.csv", header = TRUE, sep = ",")
-source('data/process.R')
 
-data_phoebe <- read.csv("data/vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
-uni_names <- as.list(unique(data_phoebe$StateName))
+## Filter and create data frames for temperature and map pages
 
-bee_data <- read.csv("data/vHoneyNeonic_v03.csv")
-
-df2 <- read.csv('data/Bee_Colony_Loss.csv', stringsAsFactors = FALSE)
-df2$X.Total.Annual.Loss <- df2$X.Total.Annual.Loss * 100
-
-df3 <- read.csv('data/vHoneyNeonic_v03.csv', stringsAsFactors = FALSE)
-colonies <- df3 %>% select(numcol, year, StateName) %>% rename(State = StateName) %>% mutate(numcol = numcol / 1000)
-
-temp <- read.csv('data/Temperature_small.csv', stringsAsFactors = FALSE)
+# Fix Georgia name and date
 fixed_georgia <- temp %>% 
   filter(State == "Georgia (State)") %>% 
   mutate(State = "Georgia")
-temp <- rbind(temp, fixed_georgia) %>% filter(State != "Georgia (State)")
+temp <- rbind(temp, fixed_georgia) %>% 
+  filter(State != "Georgia (State)")
 temp$dt <- as.Date(temp$dt)
+
+# Scale total annual loss from colony loss data
+df2$X.Total.Annual.Loss <- df2$X.Total.Annual.Loss * 100
+
+# Filter and scale bee data
+colonies <- df3 %>% 
+  select(numcol, year, StateName) %>%
+  rename(State = StateName) %>% 
+  mutate(numcol = numcol / 1000)
+
+
+## Create states lsit for dropdown in ui
 state_name <- unique(df3$StateName)
+uni_names <- as.list(unique(data_phoebe$StateName))
 
 server <- function(input, output) {
   
@@ -62,14 +103,17 @@ server <- function(input, output) {
   })
   
   output$note <- renderText({
-    text <- paste0("<h3>Bee Colonies Lost Percentage by State Between ","<font color=\"#FF0000\"><b>", input$year)
+    text <- paste0("<h3>Bee Colonies Lost Percentage by State Between ",
+                   "<font color=\"#FF0000\"><b>", input$year)
   })
   
-  
+  ########## COLONIES (MAP) ##########
   
   output$bees <- renderLeaflet({
     df_bees <- dfreact() %>% filter(Year == input$year)
-      states <- geojsonio::geojson_read(x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json", what = "sp")
+      states <- geojsonio::geojson_read(
+        x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json", 
+        what = "sp")
       df_bees <- dfreact() %>% filter(Year == input$year)
       df_bees <- merge(states, df_bees, by.x="name", by.y="X.State", all.x=TRUE)
       pr <- filter(df_bees, name == "Puerto Rico")
@@ -105,17 +149,26 @@ server <- function(input, output) {
           style = list("font-weight" = "normal", padding = "3px 8px"),
           textsize = "15px",
           direction = "auto"))
-      m %>% addLegend(pal = pal, values = ~df_bees$X.Total.Annual.Loss, opacity = 0.7, title = NULL,
+      m %>% addLegend(pal = pal, values = ~df_bees$X.Total.Annual.Loss, 
+                      opacity = 0.7, title = NULL,
                       position = "bottomright") #%>% add("USA")
   })
   # 
   output$beesbar <- renderPlot({
     df_bar <- dfreact() %>% filter(Year == input$year)
-    ggplot(df_bar) + geom_bar(aes(X.State, X.Total.Annual.Loss, fill= X.Total.Annual.Loss), stat = "identity") + coord_flip() +
-      labs(x= "USA States", y = "Percentage Lost") + guides(fill=FALSE) + 
-      theme(axis.text=element_text(size=12), title = element_text(size = 20), axis.title=element_text(size=14,face="bold")) +
-      scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100)) + scale_fill_gradient2(low="#FAD800", high = "#FA7500", limits=c(0,100))
+    ggplot(df_bar) + 
+    geom_bar(aes(X.State, X.Total.Annual.Loss, fill= X.Total.Annual.Loss),
+             stat = "identity") + coord_flip() +
+    labs(x= "USA States", y = "Percentage Lost") +
+    guides(fill=FALSE) + 
+    theme(axis.text=element_text(size=12), 
+          title = element_text(size = 20),
+          axis.title=element_text(size=14,face="bold")) +
+    scale_y_continuous(breaks=seq(0, 100, 10), limits=c(0, 100)) +
+    scale_fill_gradient2(low="#FAD800", high = "#FA7500", limits=c(0,100))
   })
+  
+  ########## TEMPERATURE ##########
   
   output$temp <- renderPlot({
     if(is.null(input$myPicker)) {
@@ -128,12 +181,11 @@ server <- function(input, output) {
                              State.x = character(),
                              AvgTemperature=numeric(),
                              State.y=character()
-                             # changeTemp=numeric()
                            )
     calculated$State.x <- as.character(calculated$State.x)
     calculated$State.y <- as.character(calculated$State.y)
-    # Input the state that want to be plotted
     
+    # Input the state to be plotted
     state_name <- unique(data$State)
     for (val in state_name) {
       filtered <- data %>% 
@@ -144,8 +196,6 @@ server <- function(input, output) {
       filtered$year <- as.numeric(format(filtered$year,'%Y'))
       filtered <- filtered %>% 
         arrange(.,year)
-        # mutate(changeTemp = AvgTemperature - .$AvgTemperature[1])
-      # calculated <- bind_rows(calculated, filtered)
       colonies_filtered <- colonies %>% filter(State == val)
       joined <- inner_join(colonies_filtered, filtered, by = "year", copy = FALSE)
       calculated <- rbind(calculated, joined)
@@ -154,15 +204,19 @@ server <- function(input, output) {
 
     ggplot(state, aes(x=AvgTemperature, y=numcol)) +
       geom_point() + 
-      geom_smooth(method = lm, se=FALSE) + facet_wrap(. ~State.y, scales = "free", shrink = TRUE,
-                                                                     as.table = TRUE) +
-      labs(x= "Average Temperature (Celsius)", y = "Number of Bees Colonies (thousands)", title = "Correlation Between Average Temperature and Number of Bees Colonies") +
-      theme(axis.text=element_text(size=12), title = element_text(size = 20), axis.title=element_text(size=14,face="bold")) +
+      geom_smooth(method = lm, se=FALSE) + 
+      facet_wrap(. ~State.y, scales = "free", shrink = TRUE, as.table = TRUE) +
+      labs(x= "Average Temperature (Celsius)", 
+           y = "Number of Bees Colonies (thousands)", 
+           title = "Correlation Between Average Temperature and Number of Bees Colonies") +
+      theme(axis.text=element_text(size=12), 
+            title = element_text(size = 20), 
+            axis.title=element_text(size=14,face="bold")) +
       scale_y_continuous()
     
     
   })
- 
+  
   output$threshold <- renderPlot({
     if(is.null(input$myPicker)) {
       return(ggplot())
@@ -173,11 +227,10 @@ server <- function(input, output) {
                              maxTemp=numeric(),
                              minTemp=numeric(),
                              Country=character()
-                             # changeTemp=numeric()
     )
-    # Input the state that want to be plotted
     
-    #### Calculate change in avg temp
+    # Input the state that want to be plotted
+    # Calculate change in avg temp
     state_name <- unique(data$State)
     for (val in state_name) {
       filtered <- data %>% 
@@ -199,29 +252,38 @@ server <- function(input, output) {
         calculated <- rbind(calculated, get_temp)
       }
     }
+    
     get_state <- calculated %>% filter(State %in% input$myPicker)
-    ggplot(get_state, aes(year), show.legend = FALSE) + geom_point(aes(y=maxTemp)) + geom_point(aes(y=minTemp)) + geom_line(aes(y=maxTemp, color='#FFDD50')) + geom_line(aes(y=minTemp,  color='#FFDD50')) +
-      geom_hline(yintercept=34, linetype="dashed", color = "red") + geom_hline(yintercept=13, linetype="dashed", color = "red") +
+    ggplot(get_state, aes(year), show.legend = FALSE) + geom_point(aes(y=maxTemp)) + 
+      geom_point(aes(y=minTemp)) + geom_line(aes(y=maxTemp, color='#FFDD50')) + 
+      geom_line(aes(y=minTemp,  color='#FFDD50')) +
+      geom_hline(yintercept=34, linetype="dashed", color = "red") + 
+      geom_hline(yintercept=13, linetype="dashed", color = "red") +
       facet_wrap(. ~State, scales = "free", shrink = TRUE, as.table = TRUE) +
-      labs(x= "Year", y = "Temperature (Celsius)", title = "Max/Min Temperature Overtime by State") +
-      theme(axis.text=element_text(size=12), title = element_text(size = 20), axis.title=element_text(size=14,face="bold")) +
+      labs(x= "Year", y = "Temperature (Celsius)", 
+           title = "Max/Min Temperature Overtime by State") +
+      theme(axis.text=element_text(size=12), title = element_text(size = 20), 
+            axis.title=element_text(size=14,face="bold")) +
       scale_x_continuous(breaks = seq(1975,2015,5)) + guides(color=FALSE)
   
   })
+  
+  ########## COLONIES (LINE) ##########
   
   output$phoebe_graph <- renderPlot({
     if (input$radio == "Region") {
       colonies_per_year <- data_phoebe %>% 
         group_by(year, Region) %>% 
         summarise(col_total = sum(numcol, na.rm = TRUE)) 
-      ggplot(colonies_per_year, aes(x = year, y = col_total, group = Region, color = Region)) +
+      ggplot(colonies_per_year, aes(x = year, y = col_total, 
+                                    group = Region, color = Region)) +
         geom_point(size = 1) + geom_line() +
         labs(title = "Total Number of Honeybee Colonies by Region",
              x = "Year",
              y = "Number of Colonies",
              color = "Region") +
         scale_x_continuous(breaks = seq(1991, 2017, by = 2)) +
-        theme(axis.text=element_text(size=12), title = element_text(size = 20), 
+        theme(axis.text=element_text(size=12), title = element_text(size = 20),
               axis.title=element_text(size=14,face="bold"))
     } else {
       state_name <- input$select
@@ -229,7 +291,8 @@ server <- function(input, output) {
         filter(StateName == state_name) %>% 
         select(numcol, year)
       ggplot(colonies_per_year, aes(x = year, y = numcol)) +
-        geom_point(size = 2, col = "#f4be41") + geom_line(size = 1, col = "#f4c741") + 
+        geom_point(size = 2, col = "#f4be41") + 
+        geom_line(size = 1, col = "#f4c741") + 
         labs(title = paste0("Total Number of Honeybee Colonies in ", state_name),
              x = "Year",
              y = "Number of Colonies") +
@@ -239,13 +302,17 @@ server <- function(input, output) {
     }
   })
   
-  states_list <- sort(unique(data.frame(lapply(neonic, as.character), stringsAsFactors=FALSE)[[9]]))
+  ########## PESTICIDES ##########
+  
+  states_list <- sort(unique(data.frame(lapply(neonic, as.character),
+                                        stringsAsFactors=FALSE)[[9]]))
   area_selector_options <- append(list("All States"), states_list)
   output$state_selector_xy <- renderUI({
-    selectInput('state_xy', 'Filter By State', area_selector_options, "All States")
+    selectInput('state_xy', 'Filter By State', 
+                area_selector_options, "All States")
   })
   
-  # x dropdown
+  # Get x dropdown
   xlist <- list('Year', 'Honey Yield', 'Amount of Neonic Pesticides')
   output$x_xy_selector <- renderUI({
     selection <- xlist
@@ -258,7 +325,7 @@ server <- function(input, output) {
     return(selectInput('x_xy', 'x axis', selection))
   })
   
-  # y dropdown
+  # Get y dropdown
   ylist <- list('Honey Yield', 'Year', 'Amount of Neonic Pesticides')
   output$y_xy_selector <- renderUI({
     selection <- ylist
@@ -271,7 +338,7 @@ server <- function(input, output) {
     return(selectInput('y_xy', 'y axis', selection))
   })
   
-  ### MICHELLEEEEE
+  # Plot selected x vs selected y
   output$plot_xy <- renderPlot({
     data <- by_year(neonic)
     x <- "Year"
@@ -282,7 +349,8 @@ server <- function(input, output) {
     if (!is.null(input$y_xy) && !is.na(input$y_xy)) {
       y <- input$y_xy
     }
-    if (!is.null(input$state_xy) && !is.na(input$state_xy) && input$state_xy != "All States") {
+    if (!is.null(input$state_xy) && !is.na(input$state_xy) &&
+        input$state_xy != "All States") {
       data <- filter_by_state(input$state_xy, neonic)
     }
     
@@ -294,9 +362,13 @@ server <- function(input, output) {
     ) {
       data <- by_year(data)
     }
-    return(plot_var(data, name_to_col(data, x), name_to_col(data, y), paste0(y, " by ", x, " for ", input$state_xy), x, y))
+    return(plot_var(data, name_to_col(data, x), name_to_col(data, y), 
+                    paste0(y, " by ", x, " for ", input$state_xy), x, y))
   })
   
+  ########## POLLUTION ##########
+  
+  # Get units label for selected pollutant
   get_label <- reactive({
     molecule <- input$pollutant
     
@@ -308,6 +380,7 @@ server <- function(input, output) {
     label
   })
   
+  # Plot selected state's year data vs selected pollutant concentration
   output$pollution_vs_colonies <- renderPlot({
     pollutant_selected <- input$pollutant
     label <- get_label()
@@ -328,7 +401,7 @@ server <- function(input, output) {
             axis.title=element_text(size=14,face="bold"))
   })
   
-  ## KYLE
+  # Plot all states' year data vs selected pollutant concentration
   output$all_states <- renderPlot({
     pollutant_selected <- input$pollutant
     label <- get_label()

@@ -1,23 +1,16 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
+
 library(shinyWidgets)
 library(shiny)
 library(shinythemes)
-# state_name <- unique(data$State)
 source("server.R")
+
 ui <- fluidPage(
   navbarPage(
-    title = "SAVE BEES!!",
+    title = "Honey Bees and CCD",
     theme = shinytheme("united"),
     tabPanel("Overview",
              mainPanel(
-               tags$h1("Honeybee Populations are Declining!"),
+               tags$h1("What's Happening to Honeybees?"),
                tags$div(
                  tags$h3("Project Description"),
                  tags$b("Group BE4: Kyle Roland, Gavin Sreesangkom, Michelle Lee, & Phoebe Ng"),
