@@ -108,7 +108,8 @@ server <- function(input, output) {
   })
   
   ########## MAPS OF USA ##########
-  ### Plot Leaflet Choropleth Map ###
+  
+  # Plot Leaflet Choropleth
   output$bees <- renderLeaflet({
     df_bees <- dfreact() %>% filter(Year == input$year)
       states <- geojsonio::geojson_read(
@@ -153,7 +154,7 @@ server <- function(input, output) {
                       opacity = 0.7, title = NULL,
                       position = "bottomright") #%>% add("USA")
   })
-  #### Plot Bar cahart using the same data ####
+  # Plot Bar cahart using the same data as map
   output$beesbar <- renderPlot({
     df_bar <- dfreact() %>% filter(Year == input$year)
     ggplot(df_bar) + 
@@ -170,6 +171,7 @@ server <- function(input, output) {
   
   ########## TEMPERATURE ##########
   
+  # Plot temperature
   output$temp <- renderPlot({
     if(is.null(input$myPicker)) {
       return(ggplot())
@@ -202,6 +204,7 @@ server <- function(input, output) {
     }
     state <- calculated %>% filter(State.y %in% input$myPicker)
 
+    # Plot temperature scatter
     ggplot(state, aes(x=AvgTemperature, y=numcol)) +
       geom_point() + 
       geom_smooth(method = lm, se=FALSE) + 
@@ -217,6 +220,7 @@ server <- function(input, output) {
     
   })
   
+  # Plot temperature threshold
   output$threshold <- renderPlot({
     if(is.null(input$myPicker)) {
       return(ggplot())
@@ -253,6 +257,7 @@ server <- function(input, output) {
       }
     }
     
+    # Plot temperature threshold
     get_state <- calculated %>% filter(State %in% input$myPicker)
     ggplot(get_state, aes(year), show.legend = FALSE) + geom_point(aes(y=maxTemp)) + 
       geom_point(aes(y=minTemp)) + geom_line(aes(y=maxTemp, color='#FFDD50')) + 
@@ -270,6 +275,7 @@ server <- function(input, output) {
   
   ########## COLONIES (LINE) ##########
   
+  # Plot line graph
   output$phoebe_graph <- renderPlot({
     if (input$radio == "Region") {
       colonies_per_year <- data_phoebe %>% 
