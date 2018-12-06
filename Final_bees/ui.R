@@ -158,7 +158,7 @@ ui <- fluidPage(
                sidebarPanel(
                  pickerInput(
                    inputId = "myPicker", 
-                   label = "Select States: Select/deselect all + format selected", 
+                   label = "Select States: Select/deselect all", 
                    choices = state_name, 
                    options = list(
                      `actions-box` = TRUE, 

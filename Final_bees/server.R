@@ -43,7 +43,7 @@ pollution_means <- read.csv("data/small_pollution.csv")
 pollution_means$X <- NULL
 
 # Load bee colony and pesticides data
-bee_data_all <- read.csv("data/vHoneyNeonic_v03.csv")
+bee_data_all <- read.csv("data/vHoneyNeonic_v03.csv", stringsAsFactors = FALSE)
 
 # Load colony loss data
 df2 <- read.csv('data/Bee_Colony_Loss.csv', stringsAsFactors = FALSE)
@@ -107,8 +107,8 @@ server <- function(input, output) {
                    "<font color=\"#FF0000\"><b>", input$year)
   })
   
-  ########## COLONIES (MAP) ##########
-  
+  ########## MAPS OF USA ##########
+  ### Plot Leaflet Choropleth Map ###
   output$bees <- renderLeaflet({
     df_bees <- dfreact() %>% filter(Year == input$year)
       states <- geojsonio::geojson_read(
@@ -153,7 +153,7 @@ server <- function(input, output) {
                       opacity = 0.7, title = NULL,
                       position = "bottomright") #%>% add("USA")
   })
-  # 
+  #### Plot Bar cahart using the same data ####
   output$beesbar <- renderPlot({
     df_bar <- dfreact() %>% filter(Year == input$year)
     ggplot(df_bar) + 
