@@ -1,6 +1,7 @@
 # INFO-201-Final-Project
 INFO 201 Final Project - Autumn 2018
-[View Project](https://gavinsreeuw.shinyapps.io/BE4_Project/?fbclid=IwAR2_XmNXZihhgALsZhXx_Rx5DzW52_K8abRdNiQodFu7j_ayzW-MkuAnSdY)
+
+[View Shiny App Project](https://gavinsreeuw.shinyapps.io/BE4_Project/?fbclid=IwAR2_XmNXZihhgALsZhXx_Rx5DzW52_K8abRdNiQodFu7j_ayzW-MkuAnSdY)
 
 Group members: Kyle Roland, Gavin Sreesangkom, Michelle Lee, & Phoebe Ng
 
